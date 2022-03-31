@@ -2,6 +2,6 @@
 TeleBot
 build
 TelegrammBot/__pycache__
-configure.json
+*.json
 build
 docs/build
