@@ -3,11 +3,9 @@ import json
 import time
 import requests
 
-configFile = 'configure.json'
-"""Название файла с конфигурацией"""
 
 #получение токена бота
-def getTOKEN():
+def getTOKEN(configFile):
     """Вернет токен бота из файла configFile."""
     data = None
     with open(configFile, 'r') as f:
@@ -18,7 +16,7 @@ def getTOKEN():
 
 
 #получение URL сервера с сообщениями
-def getURL():
+def getURL(configFile):
     """Вернет URL сервера с удаленной БД."""
     data = None
     with open(configFile, 'r') as f:
@@ -60,22 +58,25 @@ def sendMessages(messages, bot):
     
 
 if __name__ == "__main__":
-    print("Starting")
+    print("Запуск")
+    print("Введите путь до файла конфигурации: ")
+    configFile = input()
     try:
-        URL = getURL()
-        TOKEN = getTOKEN()
+        URL = getURL(configFile)
+        TOKEN = getTOKEN(configFile)
     except KeyError:
         print("Проверьте файл конфигураций " + configFile)
         exit()
-    print("Initialize")
-    bot = telebot.TeleBot('%ваш токен%')
-    print("Work")
+    print("Авторизация")
+    bot = telebot.TeleBot(TOKEN)
+    print("Работа")
     while True:
         try:
             messages = getNewMessages(URL)
         except Exception:
-            print("Getting new messages error")
+            print("Ошибка получения новых сообщений")
         else:
+            print("Новых сообщений: ", len(messages))
             sendMessages(messages, bot)
         time.sleep(3)
-    print("End")
+    print("Конец")
