@@ -6,7 +6,9 @@ setup(
     version='1.0',
     packages=find_packages(),
     long_description=open(join(dirname(__file__), 'README.md')).read(),
-    install_requires = ["pyTelegramBotAPI==4.4.0"],
+    install_requires = ["pyTelegramBotAPI~=4.4.0",
+                        "stuptools~=49.2.1",
+                        "sphinx~=4.2.0"],
     include_package_data=True,
     command_options={
         'build_sphinx': {

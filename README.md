@@ -12,5 +12,6 @@
 ## Зависимости
 | Modules       | Version       |
 | ------------- |:-------------:|
-| pyTelegramBotAPI | 4.4.0 |
-
+| pyTelegramBotAPI | ~4.4.0 |
+| setuptools | ~61.2.0 |
+| sphinx     | ~4.5.0  |
