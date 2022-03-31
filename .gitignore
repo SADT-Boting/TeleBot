@@ -1,5 +1,7 @@
 *.bat
 TeleBot
 build
-__pycache__
+TelegrammBot/__pycache__
 configure.json
+build
+docs/build
