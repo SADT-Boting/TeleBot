@@ -4,7 +4,9 @@
 
 ## Запуск
 Запустить в командной строке в корневой директории команду 
->python setup.py install для установки зависимостей.
+>pip install requirements.txt
+
+ для установки зависимостей.
 
 Для запуска скрипта в командной строке выполнить команду 
 >python -m TelegrammBot
@@ -30,6 +32,6 @@
 ## Зависимости
 | Modules       | Version       |
 | ------------- |:-------------:|
-| pyTelegramBotAPI | ~4.4.0 |
+|pyTelegramBotAPI | ~4.4.0 |
 | setuptools | ~61.2.0 |
 | sphinx     | ~4.5.0  |
