@@ -3,10 +3,10 @@ import json
 import time
 import requests
 
+configFile = 'configure.json'
 
 #получение токена бота
-def getTOKEN(configFile):
-    """Вернет токен бота из файла configFile."""
+def getTOKEN():
     data = None
     with open(configFile, 'r') as f:
         data = json.load(f)
@@ -16,67 +16,88 @@ def getTOKEN(configFile):
 
 
 #получение URL сервера с сообщениями
-def getURL(configFile):
-    """Вернет URL сервера с удаленной БД."""
+def getURL():
     data = None
     with open(configFile, 'r') as f:
         data = json.load(f)
-    if 'TOKEN' not in data:
+    if 'URL' not in data:
         raise KeyError
     return data['URL']
 
 
 #получение новых сообщений
 def getNewMessages(URL):
-    """
-    Сделает запрос к удаленной бд для получения новых сообщений и вернет их.
-
-    Аргументы:
-    URL (str): url-адрес сервера
-    """
-    response = requests.get(URL+'/newMessages')
-    if response.status_code != 200:
-        raise Exception
+    response = requests.get(URL+'/newMessagesTelegramm')
+    if not response.ok:
+        return None
     return response.json()
 
 
 #рассылка сообщений
 def sendMessages(messages, bot):
-    """
-    Отправит сообщения пользователям.
-
-    Аргументы:
-    messages (list): список сообщений
-    bot (TeleBot): объект телеграмм-бота
-    """
+    print('New messages: ', len(messages))
     if len(messages) == 0:
         return
-    for mess in messages:
-        if mess['TelegrammId'] == 0:
+    for message in messages:
+        if message['IdTarget'] == 0:
             continue
-        bot.send_message(mess['TelegrammId'], mess['Text'])
+        idTraget = message['IdTarget']
+        student = requests.post(getURL()+'/getStudentById', data={'Id':idTraget}).json()
+        student = student['TelegrammId']
+        bot.send_message(student, message['Text'])
+        a = requests.post(getURL()+'/sendMessage', data={"Platform":"Telegramm", 'Id':message['Id']})
+
+
+#################### ЛОГИКА БОТА #########################################
+token = getTOKEN()
+bot = telebot.TeleBot(token)
+
+# ответ на команду start
+# добавление пользователя в БД
+@bot.message_handler(commands=['start'])
+def start_message(message):
+    bot.send_message(message.chat.id, "Привет. Давай познакомимся поближе. Напиши свое имя")
+    bot.register_next_step_handler(message, registration_name_wrapper({'TelegrammId':message.chat.id}))
+
+def registration_name_wrapper(user):
+    def registration_name(message, user=user):
+        name = message.text.capitalize()
+        user['FName'] = name
+        bot.send_message(message.chat.id, "Теперь фамилию")
+        bot.register_next_step_handler(message, registration_surname_wrapper(user))
+    return registration_name
+
+def registration_surname_wrapper(user):
+    def registration_surname(message, user=user):
+        surname = message.text.capitalize()
+        user['LName'] = surname
+        bot.send_message(message.chat.id, "Теперь группу")
+        bot.register_next_step_handler(message, registration_group_wrapper(user)) 
+    return registration_surname
+
+def registration_group_wrapper(user):
+    def registration_group(message, user=user):
+        group = message.text.upper()
+        user['Group'] = group
+        result = requests.post(getURL()+"/addTelegrammIdByName", data=user)
+        if result.text != 'success':
+            bot.send_message(message.chat.id, "Ой, что-то пошло не так. Перепроверь введенные данные")
+        else:
+            print(result.text)
+            bot.send_message(message.chat.id, "Я тебя запомнил")
+    return registration_group
+
+
+# рассылка сообщений от сервера
+@bot.message_handler()
+def sendng_messages(message):
+    messages = getNewMessages(getURL())
+    if messages is None:
+        return
+    sendMessages(messages, bot)
     
 
-if __name__ == "__main__":
-    print("Запуск")
-    print("Введите путь до файла конфигурации: ")
-    configFile = input()
-    try:
-        URL = getURL(configFile)
-        TOKEN = getTOKEN(configFile)
-    except KeyError:
-        print("Проверьте файл конфигураций " + configFile)
-        exit()
-    print("Авторизация")
-    bot = telebot.TeleBot(TOKEN)
-    print("Работа")
-    while True:
-        try:
-            messages = getNewMessages(URL)
-        except Exception:
-            print("Ошибка получения новых сообщений")
-        else:
-            print("Новых сообщений: ", len(messages))
-            sendMessages(messages, bot)
-        time.sleep(3)
-    print("Конец")
+
+print(f'starting on \nTOKEN:{getTOKEN()} \nURL:{getURL()}')
+bot.polling()
+    
